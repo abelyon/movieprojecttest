@@ -16,7 +16,8 @@ class TmdbController extends Controller
     {
         $timeWindow = $request->get('time_window', 'day');
         $language = $request->get('language', 'en-US');
-        $data = $this->tmdb->trending($timeWindow, $language);
+        $page = (int) $request->get('page', 1);
+        $data = $this->tmdb->trending($timeWindow, $language, $page);
         $data['image_base'] = 'https://image.tmdb.org/t/p';
         $results = $data['results'] ?? [];
         for ($i = 0; $i < count($results); $i++) {

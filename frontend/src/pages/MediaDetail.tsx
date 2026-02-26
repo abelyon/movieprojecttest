@@ -1,13 +1,16 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useLocation } from 'react-router-dom';
 import { ArrowLeft, Bookmark, ThumbsDown, ThumbsUp } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchMovie, fetchTv, addSaved, updateSaved, removeSaved, fetchSaved } from '../lib/api';
+import { certificationDisplay } from '../lib/certification';
 import type { TmdbDetailResponse } from '../types';
 
 const IMAGE_BASE = 'https://image.tmdb.org/t/p';
 
 export function MediaDetail() {
-  const { type, id } = useParams<{ type: 'movie' | 'tv'; id: string }>();
+  const { id } = useParams<{ id: string }>();
+  const location = useLocation();
+  const type = location.pathname.startsWith('/movie') ? 'movie' : 'tv';
   const queryClient = useQueryClient();
   const numericId = id ? parseInt(id, 10) : 0;
 
@@ -61,7 +64,8 @@ export function MediaDetail() {
   const overview = (detail.overview as string) || '';
   const voteAverage = (detail.vote_average as number) ?? 0;
   const genres = ((detail.genres as { id: number; name: string }[]) || []).map((g) => g.name);
-  const certification = res.certification ?? null;
+  const certificationRaw = (res.certification && String(res.certification).trim()) || null;
+  const certification = certificationDisplay(certificationRaw);
   const cast = (res.credits?.cast ?? []).slice(0, 15);
   const providers = res.watch_providers as Record<string, unknown> | undefined;
   const flatrate = (providers?.flatrate as { logo_path: string; provider_name: string }[]) ?? [];

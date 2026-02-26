@@ -8,7 +8,7 @@ export function LoginRegister() {
   const location = useLocation();
   const from = (location.state as { from?: { pathname?: string } })?.from?.pathname ?? '/discovery';
   const [isLogin, setIsLogin] = useState(true);
-  const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
@@ -27,7 +27,7 @@ export function LoginRegister() {
           setError('Passwords do not match.');
           return;
         }
-        await register(name, email, password, passwordConfirmation);
+        await register(username, email, password, passwordConfirmation);
       }
       navigate(from, { replace: true });
     } catch (err: unknown) {
@@ -49,12 +49,12 @@ export function LoginRegister() {
       <form onSubmit={handleSubmit} className="space-y-4">
         {!isLogin && (
           <div>
-            <label htmlFor="name" className="mb-1 block text-sm text-[var(--muted)]">Name</label>
+            <label htmlFor="username" className="mb-1 block text-sm text-[var(--muted)]">Username</label>
             <input
-              id="name"
+              id="username"
               type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               required={!isLogin}
               className="w-full rounded-xl border border-white/10 bg-[var(--card)] px-4 py-3 text-white focus:border-[var(--accent)] focus:outline-none"
             />

@@ -4,7 +4,7 @@ Laravel 12 API (Sanctum + Fortify) + Vite React TypeScript frontend using TMDB A
 
 ## Stack
 
-- **Backend:** Laravel 12, Sanctum (SPA auth), Fortify (login/register/profile), SQLite
+- **Backend:** Laravel 12, Sanctum (SPA auth), Fortify (login/register/profile), MySQL
 - **Frontend:** Vite, React 19, TypeScript, React Router, TanStack Query, Tailwind CSS 4, Lucide Icons
 - **Data:** TMDB API (trending, search, movie/TV details, cast, watch providers, HU certifications)
 
@@ -12,10 +12,12 @@ Laravel 12 API (Sanctum + Fortify) + Vite React TypeScript frontend using TMDB A
 
 ### Backend
 
+Create a MySQL database (e.g. `movieproject`) and set `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` in `.env`.
+
 ```bash
 cd backend
 cp .env.example .env
-# Edit .env: set TMDB_API_KEY (get from https://www.themoviedb.org/settings/api)
+# Edit .env: DB_* for MySQL, and TMDB_API_KEY (get from https://www.themoviedb.org/settings/api)
 php artisan key:generate
 php artisan migrate
 php artisan serve

@@ -8,6 +8,15 @@ export const api = axios.create({
   headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
 });
 
+// Send Laravel's CSRF token from the XSRF-TOKEN cookie on every request
+api.interceptors.request.use((config) => {
+  const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+  if (match?.[1]) {
+    config.headers['X-XSRF-TOKEN'] = decodeURIComponent(match[1].trim());
+  }
+  return config;
+});
+
 export async function getCsrfCookie() {
   await api.get('/sanctum/csrf-cookie');
 }
@@ -18,9 +27,9 @@ export async function login(email: string, password: string) {
   await api.post('/login', { email, password });
 }
 
-export async function register(name: string, email: string, password: string, password_confirmation: string) {
+export async function register(username: string, email: string, password: string, password_confirmation: string) {
   await getCsrfCookie();
-  await api.post('/register', { name, email, password, password_confirmation });
+  await api.post('/register', { username, email, password, password_confirmation });
 }
 
 export async function logout() {
@@ -33,14 +42,14 @@ export async function fetchUser() {
   return data;
 }
 
-export async function updateUser(payload: { name?: string; email?: string }) {
+export async function updateUser(payload: { username?: string; email?: string }) {
   const { data } = await api.put('/api/user', payload);
   return data;
 }
 
 // TMDB proxy
-export async function fetchTrending(timeWindow = 'day') {
-  const { data } = await api.get('/api/tmdb/trending', { params: { time_window: timeWindow } });
+export async function fetchTrending(timeWindow = 'day', page = 1) {
+  const { data } = await api.get('/api/tmdb/trending', { params: { time_window: timeWindow, page } });
   return data;
 }
 

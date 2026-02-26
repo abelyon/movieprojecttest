@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { fetchTrending, searchTmdb } from '../lib/api';
 import { MediaCard } from '../components/MediaCard';
 import { SortFilterModal, type SortOption, type TimeWindow } from '../components/SortFilterModal';
@@ -41,33 +41,64 @@ export function Discovery() {
   const [timeWindow, setTimeWindow] = useState<TimeWindow>('day');
   const [sortBy, setSortBy] = useState<SortOption>('popularity');
   const [sortModalOpen, setSortModalOpen] = useState(false);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const debouncedQuery = useDebounce(searchQuery, 300);
-
   const isSearch = debouncedQuery.length >= 2;
 
-  const trendingQuery = useQuery({
+  const trendingInfinite = useInfiniteQuery({
     queryKey: ['trending', timeWindow],
-    queryFn: () => fetchTrending(timeWindow),
+    queryFn: ({ pageParam }) => fetchTrending(timeWindow, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      const page = lastPage?.page ?? 1;
+      const total = lastPage?.total_pages ?? 0;
+      return page < total ? page + 1 : undefined;
+    },
     enabled: !isSearch,
   });
 
-  const searchQueryResult = useQuery({
+  const searchInfinite = useInfiniteQuery({
     queryKey: ['search', debouncedQuery],
-    queryFn: () => searchTmdb(debouncedQuery, 1),
+    queryFn: ({ pageParam }) => searchTmdb(debouncedQuery, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      const page = lastPage?.page ?? 1;
+      const total = lastPage?.total_pages ?? 0;
+      return page < total ? page + 1 : undefined;
+    },
     enabled: isSearch,
   });
 
-  const rawResults = isSearch
-    ? (searchQueryResult.data?.results ?? [])
-    : (trendingQuery.data?.results ?? []);
-
+  const infinite = isSearch ? searchInfinite : trendingInfinite;
+  const rawResults = useMemo(
+    () => (infinite.data?.pages ?? []).flatMap((p) => p?.results ?? []),
+    [infinite.data?.pages]
+  );
   const results = useMemo(
     () => sortResults(rawResults as (TmdbMediaItem & { certification_hu?: string | null })[], sortBy),
     [rawResults, sortBy]
   );
 
-  const isLoading = isSearch ? searchQueryResult.isLoading : trendingQuery.isLoading;
+  const hasNextPage = infinite.hasNextPage;
+  const isFetchingNextPage = infinite.isFetchingNextPage;
+  const fetchNextPageRef = useRef(infinite.fetchNextPage);
+  fetchNextPageRef.current = infinite.fetchNextPage;
+
+  useEffect(() => {
+    const el = loadMoreRef.current;
+    if (!el || !hasNextPage || isFetchingNextPage) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) fetchNextPageRef.current?.();
+      },
+      { rootMargin: '200px', threshold: 0 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [hasNextPage, isFetchingNextPage]);
+
+  const isInitialLoading = infinite.isLoading;
 
   return (
     <div className="min-h-screen pb-20 pt-4">
@@ -93,20 +124,27 @@ export function Discovery() {
             Sort
           </button>
         </div>
-        {isLoading ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-            {[...Array(8)].map((_, i) => (
+        {isInitialLoading ? (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            {[...Array(10)].map((_, i) => (
               <div key={i} className="aspect-[2/3] animate-pulse rounded-xl bg-[var(--card)]" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {results.map((item) => (
-              <MediaCard key={`${item.media_type}-${item.id}`} item={item} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+              {results.map((item) => (
+                <MediaCard key={`${item.media_type}-${item.id}`} item={item} />
+              ))}
+            </div>
+            <div ref={loadMoreRef} className="flex min-h-[120px] items-center justify-center py-8">
+              {isFetchingNextPage && (
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
+              )}
+            </div>
+          </>
         )}
-        {!isLoading && results.length === 0 && (
+        {!isInitialLoading && results.length === 0 && (
           <p className="py-12 text-center text-[var(--muted)]">No results.</p>
         )}
       </div>

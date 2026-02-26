@@ -6,12 +6,12 @@ import { useAuth } from '../contexts/AuthContext';
 export function Profile() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [name, setName] = useState(user?.name ?? '');
+  const [username, setUsername] = useState(user?.username ?? '');
   const [email, setEmail] = useState(user?.email ?? '');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const updateProfile = useMutation({
-    mutationFn: () => updateUser({ name, email }),
+    mutationFn: () => updateUser({ username, email }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user'] });
       setMessage({ type: 'success', text: 'Profile updated.' });
@@ -45,14 +45,14 @@ export function Profile() {
         )}
         <form onSubmit={handleSubmitProfile} className="space-y-4">
           <div>
-            <label htmlFor="name" className="mb-1 block text-sm font-medium text-[var(--muted)]">
-              Name
+            <label htmlFor="username" className="mb-1 block text-sm font-medium text-[var(--muted)]">
+              Username
             </label>
             <input
-              id="name"
+              id="username"
               type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className="w-full rounded-xl border border-white/10 bg-[var(--card)] px-4 py-3 text-white focus:border-[var(--accent)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
             />
           </div>

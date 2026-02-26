@@ -28,11 +28,12 @@ class TmdbService
         return "{$this->imageBase}/{$size}{$path}";
     }
 
-    public function trending(string $timeWindow = 'day', string $language = 'en-US'): array
+    public function trending(string $timeWindow = 'day', string $language = 'en-US', int $page = 1): array
     {
         $response = Http::get("{$this->baseUrl}/trending/all/{$timeWindow}", [
             'api_key' => $this->getKey(),
             'language' => $language,
+            'page' => $page,
         ]);
         if (! $response->successful()) {
             return ['page' => 1, 'results' => [], 'total_pages' => 0, 'total_results' => 0];
@@ -96,16 +97,27 @@ class TmdbService
         }
         $data = $response->json();
         $results = $data['results'] ?? [];
-        foreach ($results as $country) {
-            if (($country['iso_3166_1'] ?? '') === 'HU') {
+        $preferred = ['HU', 'US', 'DE', 'GB'];
+        foreach ($preferred as $countryCode) {
+            foreach ($results as $country) {
+                if (($country['iso_3166_1'] ?? '') !== $countryCode) {
+                    continue;
+                }
                 $dates = $country['release_dates'] ?? [];
                 foreach ($dates as $rd) {
-                    if (! empty($rd['certification'])) {
-                        return ['certification' => $rd['certification'], 'release_date' => $rd['release_date'] ?? null];
+                    $cert = $rd['certification'] ?? null;
+                    if ($cert !== null && $cert !== '') {
+                        return ['certification' => (string) $cert, 'release_date' => $rd['release_date'] ?? null];
                     }
                 }
-                if (! empty($dates[0])) {
-                    return ['certification' => $dates[0]['certification'] ?? '', 'release_date' => $dates[0]['release_date'] ?? null];
+            }
+        }
+        foreach ($results as $country) {
+            $dates = $country['release_dates'] ?? [];
+            foreach ($dates as $rd) {
+                $cert = $rd['certification'] ?? null;
+                if ($cert !== null && $cert !== '') {
+                    return ['certification' => (string) $cert, 'release_date' => $rd['release_date'] ?? null];
                 }
             }
         }
@@ -122,9 +134,22 @@ class TmdbService
         }
         $data = $response->json();
         $results = $data['results'] ?? [];
+        $preferred = ['HU', 'US', 'DE', 'GB'];
+        foreach ($preferred as $countryCode) {
+            foreach ($results as $country) {
+                if (($country['iso_3166_1'] ?? '') !== $countryCode) {
+                    continue;
+                }
+                $rating = $country['rating'] ?? null;
+                if ($rating !== null && $rating !== '') {
+                    return ['rating' => (string) $rating];
+                }
+            }
+        }
         foreach ($results as $country) {
-            if (($country['iso_3166_1'] ?? '') === 'HU') {
-                return ['rating' => $country['rating'] ?? ''];
+            $rating = $country['rating'] ?? null;
+            if ($rating !== null && $rating !== '') {
+                return ['rating' => (string) $rating];
             }
         }
         return [];
