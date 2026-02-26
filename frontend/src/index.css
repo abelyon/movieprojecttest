@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0f0f12;
+  --card: #1a1a20;
+  --muted: #6b7280;
+  --accent: #a78bfa;
+  --accent-hover: #8b5cf6;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: #e5e7eb;
+  font-family: "DM Sans", system-ui, sans-serif;
+}
+
+#root {
+  min-height: 100vh;
+}
