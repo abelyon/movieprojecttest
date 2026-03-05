@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useSortModal } from '../contexts/SortModalContext';
-import { fetchTrending, searchTmdb } from '../lib/api';
+import { useAuth } from '../contexts/AuthContext';
+import { fetchTrending, fetchSaved, searchTmdb } from '../lib/api';
 import { MediaCard } from '../components/MediaCard';
 import { SortFilterModal, type SortOption, type TimeWindow } from '../components/SortFilterModal';
 import type { TmdbMediaItem } from '../types';
+import type { SavedMediaItem } from '../types';
 
 function sortResults(
   results: (TmdbMediaItem & { certification_hu?: string | null })[],
@@ -38,12 +40,25 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 export function Discovery() {
+  const { user } = useAuth();
   const { isOpen: sortModalOpen, closeSortModal } = useSortModal();
   const [searchQuery, setSearchQuery] = useState('');
   const [timeWindow, setTimeWindow] = useState<TimeWindow>('day');
   const [sortBy, setSortBy] = useState<SortOption>('popularity');
   const scrollRef = useRef<HTMLDivElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  const { data: savedList } = useQuery({
+    queryKey: ['saved'],
+    queryFn: fetchSaved,
+    enabled: !!user,
+  });
+  const savedLikedMap = useMemo(() => {
+    const list = (savedList ?? []) as SavedMediaItem[];
+    const map = new Map<string, boolean | null>();
+    for (const s of list) map.set(`${s.media_type}-${s.tmdb_id}`, s.liked);
+    return map;
+  }, [savedList]);
 
   const debouncedQuery = useDebounce(searchQuery, 300);
   const isSearch = debouncedQuery.length >= 2;
@@ -153,7 +168,7 @@ export function Discovery() {
                 key={`${item.media_type}-${item.id}`}
                 className="flex min-h-[calc(100dvh-10rem)] shrink-0 snap-start snap-always items-center justify-center py-4"
               >
-                <MediaCard item={item} variant="short" />
+                <MediaCard item={item} variant="short" liked={savedLikedMap.get(`${item.media_type}-${item.id}`)} />
               </section>
             ))}
             {hasNextPage && (

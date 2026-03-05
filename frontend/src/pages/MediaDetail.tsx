@@ -1,9 +1,11 @@
 import { Link, useParams, useLocation } from 'react-router-dom';
-import { ArrowLeft, Bookmark, ThumbsDown, ThumbsUp } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { ArrowLeft, Bookmark, Clapperboard, ThumbsDown, ThumbsUp, Tv } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchMovie, fetchTv, addSaved, updateSaved, removeSaved, fetchSaved } from '../lib/api';
 import { certificationDisplay } from '../lib/certification';
 import type { TmdbDetailResponse } from '../types';
+import type { SavedMediaItem } from '../types';
 
 const IMAGE_BASE = 'https://image.tmdb.org/t/p';
 
@@ -32,12 +34,42 @@ export function MediaDetail() {
   const mutateSave = useMutation({
     mutationFn: (liked?: boolean | null) =>
       savedItem ? updateSaved(savedItem.id, liked ?? savedItem.liked) : addSaved(numericId, type!, liked),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['saved'] }),
+    onMutate: async (liked?: boolean | null) => {
+      await queryClient.cancelQueries({ queryKey: ['saved'] });
+      const prev = queryClient.getQueryData<SavedMediaItem[]>(['saved']) ?? [];
+      if (savedItem) {
+        queryClient.setQueryData<SavedMediaItem[]>(['saved'], prev.map((it) =>
+          it.id === savedItem.id ? { ...it, liked: liked ?? it.liked } : it
+        ));
+      } else {
+        queryClient.setQueryData<SavedMediaItem[]>(['saved'], [
+          ...prev,
+          { id: -1, tmdb_id: numericId, media_type: type as 'movie' | 'tv', liked: liked ?? null, updated_at: '' },
+        ]);
+      }
+      return { prev };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev != null) queryClient.setQueryData(['saved'], ctx.prev);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['saved'] }),
   });
 
   const mutateRemove = useMutation({
     mutationFn: () => (savedItem ? removeSaved(savedItem.id) : Promise.resolve()),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['saved'] }),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['saved'] });
+      const prev = queryClient.getQueryData<SavedMediaItem[]>(['saved']) ?? [];
+      queryClient.setQueryData<SavedMediaItem[]>(
+        ['saved'],
+        prev.filter((it) => !(it.tmdb_id === numericId && it.media_type === type))
+      );
+      return { prev };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev != null) queryClient.setQueryData(['saved'], ctx.prev);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['saved'] }),
   });
 
   if (error || !type || !id) {
@@ -50,8 +82,51 @@ export function MediaDetail() {
 
   if (isLoading || !data) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
+      <div className="min-h-screen pb-24">
+        <div className="relative h-56 w-full overflow-hidden bg-[var(--card)] sm:h-72">
+          <motion.div
+            className="absolute inset-0 bg-[var(--card)]"
+            animate={{ opacity: [0.6, 1, 0.6] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        </div>
+        <div className="mx-auto max-w-4xl px-4 -mt-24 relative z-10">
+          <div className="flex flex-col gap-6 sm:flex-row">
+            <motion.div
+              className="h-64 w-44 shrink-0 rounded-xl bg-[var(--card)] sm:h-80 sm:w-52"
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <div className="flex-1 space-y-3">
+              <div className="flex gap-2">
+                <div className="h-6 w-16 rounded bg-[var(--card)] animate-pulse" />
+                <div className="h-6 w-12 rounded bg-[var(--card)] animate-pulse" />
+              </div>
+              <div className="h-8 w-64 max-w-sm rounded bg-[var(--card)] animate-pulse" />
+              <div className="h-4 w-32 rounded bg-[var(--card)] animate-pulse" />
+              <div className="h-5 w-12 rounded bg-[var(--card)] animate-pulse" />
+              <div className="flex gap-2 pt-1">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-6 w-16 rounded-full bg-[var(--card)] animate-pulse" />
+                ))}
+              </div>
+            </div>
+          </div>
+          <section className="mt-8 space-y-2">
+            <div className="h-5 w-24 rounded bg-[var(--card)] animate-pulse" />
+            <div className="h-4 w-full rounded bg-[var(--card)] animate-pulse" />
+            <div className="h-4 w-full max-w-2xl rounded bg-[var(--card)] animate-pulse" />
+            <div className="h-4 w-48 max-w-xl rounded bg-[var(--card)] animate-pulse" />
+          </section>
+          <section className="mt-8">
+            <div className="h-5 w-20 rounded bg-[var(--card)] animate-pulse mb-4" />
+            <div className="flex gap-4 overflow-hidden">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="h-24 w-24 shrink-0 rounded-full bg-[var(--card)] animate-pulse" />
+              ))}
+            </div>
+          </section>
+        </div>
       </div>
     );
   }
@@ -101,12 +176,17 @@ export function MediaDetail() {
           )}
           <div className="flex-1">
             <div className="mb-2 flex flex-wrap items-center gap-2">
-              <span className="font-mono rounded bg-[var(--accent)]/20 px-2 py-0.5 text-xs font-medium uppercase text-[var(--accent)]">
-                {type}
+              <span className="flex items-center justify-center rounded-full border-t border-neutral-600 bg-neutral-800/80 px-3 py-2 backdrop-blur-xs text-white">
+                {type === 'movie' ? <Clapperboard size={16} /> : <Tv size={16} />}
               </span>
               {certification && (
-                <span className="font-mono rounded bg-white/10 px-2 py-0.5 text-xs text-white">
+                <span className="flex items-center justify-center rounded-full border-t border-neutral-600 bg-neutral-800/80 px-3 py-2 text-xs font-mono font-medium text-white backdrop-blur-xs">
                   {certification}
+                </span>
+              )}
+              {voteAverage > 0 && (
+                <span className="flex items-center justify-center rounded-full border-t border-neutral-600 bg-neutral-800/80 px-3 py-2 text-xs font-mono font-medium text-white backdrop-blur-xs">
+                  {voteAverage.toFixed(1)}
                 </span>
               )}
             </div>
@@ -120,53 +200,20 @@ export function MediaDetail() {
                 })}
               </p>
             )}
-            {voteAverage > 0 && (
-              <p className="font-mono mt-2 text-lg font-medium text-white">
-                ★ {voteAverage.toFixed(1)}
-              </p>
-            )}
             {genres.length > 0 && (
-              <p className="mt-2 text-sm text-[var(--muted)]">
-                {genres.join(', ')}
-              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {genres.map((name) => (
+                  <span
+                    key={name}
+                    className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white"
+                  >
+                    {name}
+                  </span>
+                ))}
+              </div>
             )}
           </div>
         </div>
-        {overview && (
-          <section className="mt-8">
-            <h2 className="font-mono mb-2 text-lg font-semibold text-white">Overview</h2>
-            <p className="text-[var(--muted)] leading-relaxed">{overview}</p>
-          </section>
-        )}
-        {cast.length > 0 && (
-          <section className="mt-8">
-            <h2 className="font-mono mb-4 text-lg font-semibold text-white">Cast</h2>
-            <div className="flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {cast.map((person: { id: number; name: string; character?: string; profile_path: string | null }) => (
-                <div
-                  key={person.id}
-                  className="flex w-24 shrink-0 flex-col items-center text-center"
-                >
-                  {person.profile_path ? (
-                    <img
-                      src={`${imageBase}/w185${person.profile_path}`}
-                      alt={person.name}
-                      className="h-24 w-24 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-24 w-24 items-center justify-center rounded-full bg-[var(--card)] text-[var(--muted)]">
-                      {person.name.charAt(0)}
-                    </div>
-                  )}
-                  <p className="mt-1 truncate text-xs font-medium text-white">{person.name}</p>
-                  {person.character && (
-                    <p className="truncate text-xs text-[var(--muted)]">{person.character}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
         {(flatrate.length > 0 || buy.length > 0 || rent.length > 0) && (
           <section className="mt-8">
             <h2 className="font-mono mb-4 text-lg font-semibold text-white">Where to watch</h2>
@@ -222,45 +269,98 @@ export function MediaDetail() {
             </div>
           </section>
         )}
+        {overview && (
+          <section className="mt-8">
+            <h2 className="font-mono mb-2 text-lg font-semibold text-white">Overview</h2>
+            <p className="text-[var(--muted)] leading-relaxed">{overview}</p>
+          </section>
+        )}
+        {cast.length > 0 && (
+          <section className="mt-8">
+            <h2 className="font-mono mb-4 text-lg font-semibold text-white">Cast</h2>
+            <div className="flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {cast.map((person: { id: number; name: string; character?: string; profile_path: string | null }) => (
+                <div
+                  key={person.id}
+                  className="flex w-24 shrink-0 flex-col items-center text-center"
+                >
+                  {person.profile_path ? (
+                    <img
+                      src={`${imageBase}/w185${person.profile_path}`}
+                      alt={person.name}
+                      className="h-24 w-24 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-24 w-24 items-center justify-center rounded-full bg-[var(--card)] text-[var(--muted)]">
+                      {person.name.charAt(0)}
+                    </div>
+                  )}
+                  <p className="mt-1 truncate text-xs font-medium text-white">{person.name}</p>
+                  {person.character && (
+                    <p className="truncate text-xs text-[var(--muted)]">{person.character}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
       <div className="fixed bottom-6 right-6 z-50 flex flex-col-reverse items-center gap-2">
-        <Link
-          to="/discovery"
-          className="flex size-14 shrink-0 items-center justify-center rounded-full bg-[var(--card)]/95 text-white shadow-lg backdrop-blur transition hover:bg-white/10"
-          aria-label="Back to discovery"
-        >
-          <ArrowLeft size={22} />
-        </Link>
-        {isSaved && (
-          <>
-            <button
-              type="button"
-              onClick={() => mutateSave.mutate(false)}
-              className="flex size-14 shrink-0 items-center justify-center rounded-full bg-[var(--card)]/95 text-white shadow-lg backdrop-blur transition hover:bg-white/10"
-              aria-label="Dislike"
-            >
-              <ThumbsDown size={22} fill={liked === false ? 'currentColor' : undefined} />
-            </button>
-            <button
-              type="button"
-              onClick={() => mutateSave.mutate(true)}
-              className="flex size-14 shrink-0 items-center justify-center rounded-full bg-[var(--card)]/95 text-white shadow-lg backdrop-blur transition hover:bg-white/10"
-              aria-label="Like"
-            >
-              <ThumbsUp size={22} fill={liked === true ? 'currentColor' : undefined} />
-            </button>
-          </>
-        )}
-        <button
+        <motion.div whileTap={{ scale: 0.92 }} transition={{ duration: 0.15 }}>
+          <Link
+            to="/discovery"
+            className="flex size-14 shrink-0 items-center justify-center rounded-full bg-[var(--card)]/95 text-white shadow-lg backdrop-blur transition hover:bg-white/10"
+            aria-label="Back to discovery"
+          >
+            <ArrowLeft size={22} />
+          </Link>
+        </motion.div>
+        <motion.button
           type="button"
+          whileTap={{ scale: 0.92 }}
+          transition={{ duration: 0.15 }}
           onClick={() =>
             isSaved ? mutateRemove.mutate() : mutateSave.mutate(undefined)
           }
           className="flex size-14 shrink-0 items-center justify-center rounded-full bg-[var(--card)]/95 text-white shadow-lg backdrop-blur transition hover:bg-white/10"
           aria-label={isSaved ? 'Unsave' : 'Save'}
         >
-          <Bookmark size={22} fill={!isSaved ? 'currentColor' : undefined} />
-        </button>
+          <Bookmark size={22} fill={isSaved ? 'currentColor' : undefined} />
+        </motion.button>
+        <AnimatePresence>
+          {isSaved && (
+            <>
+              <motion.button
+                key="like"
+                type="button"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.2 }}
+                whileTap={{ scale: 0.92 }}
+                onClick={() => mutateSave.mutate(true)}
+                className="flex size-14 shrink-0 items-center justify-center rounded-full bg-[var(--card)]/95 text-white shadow-lg backdrop-blur transition hover:bg-white/10"
+                aria-label="Like"
+              >
+                <ThumbsUp size={22} fill={liked === true ? 'currentColor' : undefined} />
+              </motion.button>
+              <motion.button
+                key="dislike"
+                type="button"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.2 }}
+                whileTap={{ scale: 0.92 }}
+                onClick={() => mutateSave.mutate(false)}
+                className="flex size-14 shrink-0 items-center justify-center rounded-full bg-[var(--card)]/95 text-white shadow-lg backdrop-blur transition hover:bg-white/10"
+                aria-label="Dislike"
+              >
+                <ThumbsDown size={22} fill={liked === false ? 'currentColor' : undefined} />
+              </motion.button>
+            </>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

@@ -82,12 +82,7 @@ function SavedCard({ saved }: { saved: SavedMediaItem }) {
 
   return (
     <div className="relative">
-      <MediaCard item={item} />
-      <div className="mt-1 flex gap-1 text-xs text-[var(--muted)]">
-        {saved.liked === null && <span>—</span>}
-        {saved.liked === true && <span className="text-green-500">Liked</span>}
-        {saved.liked === false && <span className="text-red-500">Disliked</span>}
-      </div>
+      <MediaCard item={item} liked={saved.liked} />
     </div>
   );
 }

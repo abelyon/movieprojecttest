@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Clapperboard, Tv } from 'lucide-react';
+import { Clapperboard, ThumbsDown, ThumbsUp, Tv } from 'lucide-react';
 import type { TmdbMediaItem } from '../types';
 import { certificationDisplay } from '../lib/certification';
 
@@ -11,9 +11,10 @@ const POSTER_SIZE_SHORT = 'w500';
 interface MediaCardProps {
   item: TmdbMediaItem & { certification_hu?: string | null };
   variant?: 'default' | 'short';
+  liked?: boolean | null;
 }
 
-export function MediaCard({ item, variant = 'default' }: MediaCardProps) {
+export function MediaCard({ item, variant = 'default', liked }: MediaCardProps) {
   const type = item.media_type;
   const id = item.id;
   const title = type === 'movie' ? item.title : item.name;
@@ -22,7 +23,7 @@ export function MediaCard({ item, variant = 'default' }: MediaCardProps) {
   const certRaw = item.certification_hu?.trim();
   const hasCert = certRaw != null && certRaw !== '';
   const cert = hasCert ? certificationDisplay(certRaw) : null;
-  const hasRating = item.vote_average > 0;
+  const showLikedBadge = liked === true || liked === false;
 
   const isShort = variant === 'short';
 
@@ -60,10 +61,10 @@ export function MediaCard({ item, variant = 'default' }: MediaCardProps) {
             </span>
           )}
         </div>
-        {hasRating && (
+        {showLikedBadge && (
           <div className="absolute bottom-4 right-4">
-            <span className="flex items-center justify-center rounded-full bg-neutral-800/80 border-t border-neutral-600 backdrop-blur-xs px-3 py-2 text-xs font-mono font-medium text-white">
-              {item.vote_average.toFixed(1)}
+            <span className="flex items-center justify-center rounded-full border-t border-neutral-600 bg-neutral-800/80 px-3 py-2 text-white backdrop-blur-xs">
+              {liked === true ? <ThumbsUp size={16} fill="currentColor" /> : <ThumbsDown size={16} fill="currentColor" />}
             </span>
           </div>
         )}

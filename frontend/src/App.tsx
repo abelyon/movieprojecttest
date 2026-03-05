@@ -3,7 +3,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SortModalProvider } from './contexts/SortModalContext';
 import { Navbar } from './components/Navbar';
-import { SortButton } from './components/SortButton';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Discovery } from './pages/Discovery';
 import { Saved } from './pages/Saved';
@@ -22,7 +21,6 @@ function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const isLoginPage = location.pathname === '/login';
   const showNavbar = user != null && !isLoginPage;
-  const isDiscovery = location.pathname === '/discovery' || location.pathname === '/';
 
   return (
     <>
@@ -32,11 +30,6 @@ function Layout({ children }: { children: React.ReactNode }) {
           <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
             <Navbar />
           </div>
-          {isDiscovery && (
-            <div className="fixed bottom-6 right-6 z-50">
-              <SortButton />
-            </div>
-          )}
         </>
       )}
     </>
