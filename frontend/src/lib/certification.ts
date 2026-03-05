@@ -1,14 +1,7 @@
-/**
- * Netflix-style maturity ratings: ALL, 7+, 10+, 13+, 16+, 18+
- * Maps TMDB certifications (any country) to this scale.
- */
 export type NetflixRating = 'ALL' | '7+' | '10+' | '13+' | '16+' | '18+';
 
 const ALL_AUDIENCE_ALIASES = ['g', 'u', 'all', 'nr', 'unrated', '0', '1', '2', '3', '4', '5', '6', 'general', 'universal'];
 
-/**
- * Map raw certification string (e.g. "12", "PG-13", "16", "K-12") to Netflix-style rating.
- */
 export function certificationToNetflix(value: string | null | undefined): NetflixRating | null {
   if (value == null || value === '') return null;
   const s = value.trim();
@@ -30,9 +23,6 @@ export function certificationToNetflix(value: string | null | undefined): Netfli
   return '18+';
 }
 
-/**
- * Format for display: Netflix-style label (ALL, 7+, 10+, 13+, 16+, 18+).
- */
 export function certificationDisplay(value: string | null | undefined): string | null {
   return certificationToNetflix(value);
 }

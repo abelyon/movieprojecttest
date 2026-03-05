@@ -23,13 +23,13 @@ export function SortFilterModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 p-4" onClick={onClose}>
       <div
         className="w-full max-w-md rounded-t-2xl bg-[var(--card)] p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-white">Sort & filter</h3>
+          <h3 className="font-mono text-lg font-semibold text-white">Sort & filter</h3>
           <button
             type="button"
             onClick={onClose}
@@ -40,7 +40,7 @@ export function SortFilterModal({
         </div>
         <div className="space-y-4">
           <div>
-            <label className="mb-2 block text-sm font-medium text-[var(--muted)]">Trending period</label>
+            <label className="font-mono mb-2 block text-sm font-medium text-[var(--muted)]">Trending period</label>
             <div className="flex gap-2">
               {(['day', 'week'] as const).map((w) => (
                 <button
@@ -59,7 +59,7 @@ export function SortFilterModal({
             </div>
           </div>
           <div>
-            <label className="mb-2 block text-sm font-medium text-[var(--muted)]">Sort by</label>
+            <label className="font-mono mb-2 block text-sm font-medium text-[var(--muted)]">Sort by</label>
             <div className="flex flex-col gap-1">
               {[
                 { value: 'popularity' as const, label: 'Popularity' },

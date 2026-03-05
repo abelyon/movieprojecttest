@@ -1,11 +1,16 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Space Mono", ui-monospace, monospace;
+}
+
 :root {
   --bg: #0f0f12;
   --card: #1a1a20;
   --muted: #6b7280;
-  --accent: #a78bfa;
-  --accent-hover: #8b5cf6;
+  --accent: #f59e0b;
+  --accent-hover: #d97706;
 }
 
 body {
@@ -13,9 +18,18 @@ body {
   min-height: 100vh;
   background: var(--bg);
   color: #e5e7eb;
-  font-family: "DM Sans", system-ui, sans-serif;
+  font-family: var(--font-sans);
 }
 
 #root {
   min-height: 100vh;
+}
+
+button:focus,
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  box-shadow: none;
 }

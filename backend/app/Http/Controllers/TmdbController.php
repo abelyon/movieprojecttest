@@ -20,20 +20,9 @@ class TmdbController extends Controller
         $data = $this->tmdb->trending($timeWindow, $language, $page);
         $data['image_base'] = 'https://image.tmdb.org/t/p';
         $results = $data['results'] ?? [];
-        for ($i = 0; $i < count($results); $i++) {
-            $item = $results[$i];
-            $cert = null;
-            if ($i < 15) {
-                if (($item['media_type'] ?? '') === 'movie') {
-                    $rd = $this->tmdb->movieReleaseDates((int) ($item['id'] ?? 0));
-                    $cert = $rd['certification'] ?? null;
-                }
-                if (($item['media_type'] ?? '') === 'tv') {
-                    $cr = $this->tmdb->tvContentRatings((int) ($item['id'] ?? 0));
-                    $cert = $cr['rating'] ?? null;
-                }
-            }
-            $results[$i]['certification_hu'] = $cert;
+        $certs = $this->tmdb->getCertificationsForItems($results);
+        foreach ($results as $i => $item) {
+            $results[$i]['certification_hu'] = $certs[$i] ?? null;
         }
         $data['results'] = $results;
         return response()->json($data);
@@ -46,20 +35,9 @@ class TmdbController extends Controller
         $language = $request->get('language', 'en-US');
         $data = $this->tmdb->search($query, $page, $language);
         $results = $data['results'] ?? [];
-        for ($i = 0; $i < count($results); $i++) {
-            $item = $results[$i];
-            $cert = null;
-            if ($i < 15) {
-                if (($item['media_type'] ?? '') === 'movie') {
-                    $rd = $this->tmdb->movieReleaseDates((int) ($item['id'] ?? 0));
-                    $cert = $rd['certification'] ?? null;
-                }
-                if (($item['media_type'] ?? '') === 'tv') {
-                    $cr = $this->tmdb->tvContentRatings((int) ($item['id'] ?? 0));
-                    $cert = $cr['rating'] ?? null;
-                }
-            }
-            $results[$i]['certification_hu'] = $cert;
+        $certs = $this->tmdb->getCertificationsForItems($results);
+        foreach ($results as $i => $item) {
+            $results[$i]['certification_hu'] = $certs[$i] ?? null;
         }
         $data['results'] = $results;
         return response()->json($data);

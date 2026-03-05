@@ -40,7 +40,7 @@ export function LoginRegister() {
 
   return (
     <div className="mx-auto max-w-md px-4">
-      <h2 className="mb-4 text-xl font-semibold text-white">
+      <h2 className="font-mono mb-4 text-xl font-semibold text-white">
         {isLogin ? 'Sign in' : 'Create account'}
       </h2>
       {error && (

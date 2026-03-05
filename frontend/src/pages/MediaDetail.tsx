@@ -79,7 +79,7 @@ export function MediaDetail() {
   const liked = savedItem?.liked ?? null;
 
   return (
-    <div className="min-h-screen pb-24">
+    <div className="min-h-screen pb-24 relative">
       <div className="relative h-56 w-full overflow-hidden bg-[var(--card)] sm:h-72">
         {backdropPath && (
           <img
@@ -89,13 +89,6 @@ export function MediaDetail() {
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg)] via-[var(--bg)]/60 to-transparent" />
-        <Link
-          to="/discovery"
-          className="absolute left-4 top-4 flex items-center gap-2 rounded-lg bg-black/50 px-3 py-2 text-sm text-white hover:bg-black/70"
-        >
-          <ArrowLeft size={18} />
-          Back
-        </Link>
       </div>
       <div className="mx-auto max-w-4xl px-4 -mt-24 relative z-10">
         <div className="flex flex-col gap-6 sm:flex-row">
@@ -108,16 +101,16 @@ export function MediaDetail() {
           )}
           <div className="flex-1">
             <div className="mb-2 flex flex-wrap items-center gap-2">
-              <span className="rounded bg-[var(--accent)]/20 px-2 py-0.5 text-xs font-medium uppercase text-[var(--accent)]">
+              <span className="font-mono rounded bg-[var(--accent)]/20 px-2 py-0.5 text-xs font-medium uppercase text-[var(--accent)]">
                 {type}
               </span>
               {certification && (
-                <span className="rounded bg-white/10 px-2 py-0.5 text-xs text-white">
+                <span className="font-mono rounded bg-white/10 px-2 py-0.5 text-xs text-white">
                   {certification}
                 </span>
               )}
             </div>
-            <h1 className="text-2xl font-bold text-white sm:text-3xl">{title}</h1>
+            <h1 className="font-mono text-2xl font-bold text-white sm:text-3xl">{title}</h1>
             {releaseDate && (
               <p className="mt-1 text-sm text-[var(--muted)]">
                 {new Date(releaseDate).toLocaleDateString('en-US', {
@@ -128,7 +121,7 @@ export function MediaDetail() {
               </p>
             )}
             {voteAverage > 0 && (
-              <p className="mt-2 text-lg font-medium text-white">
+              <p className="font-mono mt-2 text-lg font-medium text-white">
                 ★ {voteAverage.toFixed(1)}
               </p>
             )}
@@ -137,58 +130,18 @@ export function MediaDetail() {
                 {genres.join(', ')}
               </p>
             )}
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() =>
-                  isSaved ? mutateRemove.mutate() : mutateSave.mutate(undefined)
-                }
-                className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition ${
-                  isSaved
-                    ? 'bg-[var(--accent)] text-white'
-                    : 'bg-white/10 text-white hover:bg-white/20'
-                }`}
-              >
-                <Bookmark size={18} />
-                {isSaved ? 'Unsave' : 'Save'}
-              </button>
-              {isSaved && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => mutateSave.mutate(true)}
-                    className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition ${
-                      liked === true ? 'bg-green-600 text-white' : 'bg-white/10 text-white hover:bg-white/20'
-                    }`}
-                  >
-                    <ThumbsUp size={18} />
-                    Like
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => mutateSave.mutate(false)}
-                    className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition ${
-                      liked === false ? 'bg-red-600 text-white' : 'bg-white/10 text-white hover:bg-white/20'
-                    }`}
-                  >
-                    <ThumbsDown size={18} />
-                    Dislike
-                  </button>
-                </>
-              )}
-            </div>
           </div>
         </div>
         {overview && (
           <section className="mt-8">
-            <h2 className="mb-2 text-lg font-semibold text-white">Overview</h2>
+            <h2 className="font-mono mb-2 text-lg font-semibold text-white">Overview</h2>
             <p className="text-[var(--muted)] leading-relaxed">{overview}</p>
           </section>
         )}
         {cast.length > 0 && (
           <section className="mt-8">
-            <h2 className="mb-4 text-lg font-semibold text-white">Cast</h2>
-            <div className="flex gap-4 overflow-x-auto pb-2">
+            <h2 className="font-mono mb-4 text-lg font-semibold text-white">Cast</h2>
+            <div className="flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {cast.map((person: { id: number; name: string; character?: string; profile_path: string | null }) => (
                 <div
                   key={person.id}
@@ -216,7 +169,7 @@ export function MediaDetail() {
         )}
         {(flatrate.length > 0 || buy.length > 0 || rent.length > 0) && (
           <section className="mt-8">
-            <h2 className="mb-4 text-lg font-semibold text-white">Where to watch</h2>
+            <h2 className="font-mono mb-4 text-lg font-semibold text-white">Where to watch</h2>
             <div className="flex flex-wrap gap-4">
               {flatrate.map((p: { logo_path: string; provider_name: string }) => (
                 <div
@@ -269,6 +222,45 @@ export function MediaDetail() {
             </div>
           </section>
         )}
+      </div>
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col-reverse items-center gap-2">
+        <Link
+          to="/discovery"
+          className="flex size-14 shrink-0 items-center justify-center rounded-full bg-[var(--card)]/95 text-white shadow-lg backdrop-blur transition hover:bg-white/10"
+          aria-label="Back to discovery"
+        >
+          <ArrowLeft size={22} />
+        </Link>
+        {isSaved && (
+          <>
+            <button
+              type="button"
+              onClick={() => mutateSave.mutate(false)}
+              className="flex size-14 shrink-0 items-center justify-center rounded-full bg-[var(--card)]/95 text-white shadow-lg backdrop-blur transition hover:bg-white/10"
+              aria-label="Dislike"
+            >
+              <ThumbsDown size={22} fill={liked === false ? 'currentColor' : undefined} />
+            </button>
+            <button
+              type="button"
+              onClick={() => mutateSave.mutate(true)}
+              className="flex size-14 shrink-0 items-center justify-center rounded-full bg-[var(--card)]/95 text-white shadow-lg backdrop-blur transition hover:bg-white/10"
+              aria-label="Like"
+            >
+              <ThumbsUp size={22} fill={liked === true ? 'currentColor' : undefined} />
+            </button>
+          </>
+        )}
+        <button
+          type="button"
+          onClick={() =>
+            isSaved ? mutateRemove.mutate() : mutateSave.mutate(undefined)
+          }
+          className="flex size-14 shrink-0 items-center justify-center rounded-full bg-[var(--card)]/95 text-white shadow-lg backdrop-blur transition hover:bg-white/10"
+          aria-label={isSaved ? 'Unsave' : 'Save'}
+        >
+          <Bookmark size={22} fill={!isSaved ? 'currentColor' : undefined} />
+        </button>
       </div>
     </div>
   );

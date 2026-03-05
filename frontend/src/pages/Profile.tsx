@@ -33,7 +33,6 @@ export function Profile() {
   return (
     <div className="min-h-screen pb-24 pt-4">
       <div className="mx-auto max-w-md px-4">
-        <h1 className="mb-6 text-2xl font-bold text-white">Profile</h1>
         {message && (
           <div
             className={`mb-4 rounded-lg px-4 py-2 text-sm ${
@@ -53,7 +52,7 @@ export function Profile() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-[var(--card)] px-4 py-3 text-white focus:border-[var(--accent)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+              className="w-full rounded-xl border border-white/10 bg-[var(--card)] px-4 py-3 text-white focus:border-[var(--accent)] focus:outline-none"
             />
           </div>
           <div>
@@ -65,7 +64,7 @@ export function Profile() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-[var(--card)] px-4 py-3 text-white focus:border-[var(--accent)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+              className="w-full rounded-xl border border-white/10 bg-[var(--card)] px-4 py-3 text-white focus:border-[var(--accent)] focus:outline-none"
             />
           </div>
           <button
@@ -76,10 +75,6 @@ export function Profile() {
             {updateProfile.isPending ? 'Saving…' : 'Update profile'}
           </button>
         </form>
-        <p className="mt-6 text-sm text-[var(--muted)]">
-          Password change and other Fortify features (2FA, reset) are available via Laravel Fortify
-          routes. Configure them in the backend and add forms here if needed.
-        </p>
       </div>
     </div>
   );

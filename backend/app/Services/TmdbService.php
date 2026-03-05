@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Client\Pool;
 use Illuminate\Support\Facades\Http;
 
 class TmdbService
@@ -153,6 +154,101 @@ class TmdbService
             }
         }
         return [];
+    }
+
+    public function getCertificationsForItems(array $items): array
+    {
+        $key = $this->getKey();
+        $slice = array_slice($items, 0, 15, true);
+        $requests = [];
+        foreach ($slice as $i => $item) {
+            $id = (int) ($item['id'] ?? 0);
+            $mediaType = $item['media_type'] ?? '';
+            if ($mediaType === 'movie') {
+                $requests[(string) $i] = ['type' => 'movie', 'url' => "{$this->baseUrl}/movie/{$id}/release_dates"];
+            } elseif ($mediaType === 'tv') {
+                $requests[(string) $i] = ['type' => 'tv', 'url' => "{$this->baseUrl}/tv/{$id}/content_ratings"];
+            }
+        }
+
+        if (empty($requests)) {
+            return array_fill_keys(array_keys($slice), null);
+        }
+
+        $responses = Http::pool(fn (Pool $pool) => collect($requests)->map(
+            fn (array $req, string $i) => $pool->as($i)->get($req['url'], ['api_key' => $key])
+        )->all());
+
+        $certs = [];
+        foreach (array_keys($slice) as $i) {
+            $certs[$i] = null;
+            $response = $responses[(string) $i] ?? null;
+            if (! $response?->successful()) {
+                continue;
+            }
+            $data = $response->json();
+            if (($requests[(string) $i]['type'] ?? '') === 'movie') {
+                $parsed = $this->parseMovieReleaseDatesResponse($data);
+                $certs[$i] = $parsed;
+            } else {
+                $parsed = $this->parseTvContentRatingsResponse($data);
+                $certs[$i] = $parsed;
+            }
+        }
+
+        return $certs;
+    }
+
+    private function parseMovieReleaseDatesResponse(array $data): ?string
+    {
+        $results = $data['results'] ?? [];
+        $preferred = ['HU', 'US', 'DE', 'GB'];
+        foreach ($preferred as $countryCode) {
+            foreach ($results as $country) {
+                if (($country['iso_3166_1'] ?? '') !== $countryCode) {
+                    continue;
+                }
+                foreach ($country['release_dates'] ?? [] as $rd) {
+                    $cert = $rd['certification'] ?? null;
+                    if ($cert !== null && $cert !== '') {
+                        return (string) $cert;
+                    }
+                }
+            }
+        }
+        foreach ($results as $country) {
+            foreach ($country['release_dates'] ?? [] as $rd) {
+                $cert = $rd['certification'] ?? null;
+                if ($cert !== null && $cert !== '') {
+                    return (string) $cert;
+                }
+            }
+        }
+        return null;
+    }
+
+    private function parseTvContentRatingsResponse(array $data): ?string
+    {
+        $results = $data['results'] ?? [];
+        $preferred = ['HU', 'US', 'DE', 'GB'];
+        foreach ($preferred as $countryCode) {
+            foreach ($results as $country) {
+                if (($country['iso_3166_1'] ?? '') !== $countryCode) {
+                    continue;
+                }
+                $rating = $country['rating'] ?? null;
+                if ($rating !== null && $rating !== '') {
+                    return (string) $rating;
+                }
+            }
+        }
+        foreach ($results as $country) {
+            $rating = $country['rating'] ?? null;
+            if ($rating !== null && $rating !== '') {
+                return (string) $rating;
+            }
+        }
+        return null;
     }
 
     public function movieCredits(int $id): array

@@ -12,18 +12,18 @@ export function Navbar() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-[var(--card)]/95 backdrop-blur">
-      <div className="mx-auto flex max-w-lg justify-around px-4 py-2">
+    <nav>
+      <div className="flex h-14 shrink-0 items-center gap-1 rounded-full border border-white/10 bg-[var(--card)]/95 px-4 shadow-lg backdrop-blur">
         {nav.map(({ to, label, icon: Icon }) => {
           const isActive = location.pathname === to || (to === '/discovery' && location.pathname === '/');
           return (
             <Link
               key={to}
               to={to}
-              className={`flex flex-col items-center gap-0.5 rounded-lg px-4 py-2 transition ${isActive ? 'text-[var(--accent)]' : 'text-[var(--muted)] hover:text-white'}`}
+              className={`flex items-center justify-center rounded-full p-3 transition ${isActive ? 'text-neutral-50' : 'text-neutral-600 hover:text-neutral-50'}`}
+              aria-label={label}
             >
               <Icon size={22} />
-              <span className="text-xs font-medium">{label}</span>
             </Link>
           );
         })}

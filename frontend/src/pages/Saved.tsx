@@ -30,7 +30,6 @@ export function Saved() {
   return (
     <div className="min-h-screen pb-24 pt-4">
       <div className="mx-auto max-w-6xl px-4">
-        <h1 className="mb-6 text-2xl font-bold text-white">Saved</h1>
         {list.length === 0 ? (
           <p className="text-[var(--muted)]">No saved items. Save from Discovery or media detail.</p>
         ) : (
